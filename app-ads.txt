@@ -1,0 +1,6 @@
+# app-ads.txt — Authorized Digital Sellers (IAB Tech Lab)
+# https://iabtechlab.com/ads-txt/
+# Authorizes Google AdMob to sell ad inventory for Vials: ASMR Sand Sort Puzzle.
+# Served at https://vialsgame.com/app-ads.txt; crawled after the app's store
+# listing declares vialsgame.com as the developer/marketing website.
+google.com, pub-6286917661279584, DIRECT, f08c47fec0942fa0
