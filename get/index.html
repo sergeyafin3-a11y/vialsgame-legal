@@ -6,32 +6,38 @@
 <title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
 <script>
-  // Mobile visitors -> straight to the store (works inside TikTok/Instagram/etc.).
-  // CRITICAL: use the FULL CANONICAL App Store URL
-  //   https://apps.apple.com/us/app/<slug>/id<num>
-  // The short form (apps.apple.com/app/id<num>) 301-redirects to the canonical
-  // one, and that extra 301 hop is what makes in-app webviews choke with a blank
-  // page + "Выполнить действие не удалось". Linking straight to the canonical URL
-  // lets iOS recognise it as an App Store Universal Link and hand off to the App
-  // Store app immediately — this is exactly why pufferfishgame.com works from TikTok.
-  // Landing below is the fallback: desktop, ?stay=1, internal nav, try/catch fail-open.
-  // Android is NOT redirected yet (Play listing still 404) — it falls to the
-  // landing's "coming soon". Flip the Android branch on when Play goes live.
+  // Store redirect with a landing fallback, decided BY BROWSER (not after failure).
+  //
+  // Why detection and not try/catch: inside in-app browsers (TikTok / Instagram /
+  // Facebook) a programmatic jump to the App Store (location.replace to a Universal
+  // Link) is swallowed by the webview — it paints its OWN blank page + "Выполнить
+  // действие не удалось". That happens AFTER our page unloads, so it's impossible to
+  // catch and recover from in JS. Verified on-device twice. Our code is byte-for-byte
+  // pufferfishgame.com's approach and still blanks, so it's domain/webview policy, not
+  // something the page can fix. So: redirect ONLY where it actually works (real
+  // Safari/Chrome), and in in-app browsers show the landing whose <a href> tap button
+  // DOES open the store (a real user tap is a gesture the webview honours).
+  //
+  // Result: real browser on iPhone -> store, 0 taps. TikTok/IG/FB -> clean landing,
+  // 1 tap, never a blank screen. Desktop / Android -> landing.
   (function () {
     try {
       var loc = window.location;
       var params = new URLSearchParams(loc.search);
-      if (params.has('stay')) return;
+      if (params.has('stay')) return;                 // manual escape hatch
       if (document.referrer && document.referrer.indexOf(loc.origin) === 0) return;
       var ua = navigator.userAgent || '';
       var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-      if (!isIOS) return; // Android + desktop stay on the landing for now
+      if (!isIOS) return;                             // Android + desktop -> landing
+      // In-app browsers blank out on a programmatic store jump -> never redirect them.
+      var inApp = /BytedanceWebview|musical_ly|TikTok|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(ua);
+      if (inApp) return;                              // -> landing + tap button
       var src = params.get('utm_source') || params.get('from') || params.get('ref') || 'bio';
       loc.replace('https://apps.apple.com/us/app/vials-asmr-sand-sort-puzzle/id6783449445?ct=' + encodeURIComponent(src));
       // ANDROID LAUNCH: replace the `if (!isIOS) return;` line above with:
       //   var isAndroid = /Android/.test(ua);
       //   if (!isIOS && !isAndroid) return;
-      // and, inside, branch Android to:
+      // and branch Android (real browsers only) to:
       //   loc.replace('https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer='
       //     + encodeURIComponent('utm_source=' + src + '&utm_medium=social'));
     } catch (e) { /* fail open — show the landing page */ }
