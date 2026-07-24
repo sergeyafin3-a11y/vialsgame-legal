@@ -5,14 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
+<script>
+  // Mobile visitors -> straight to the store (saves a tap from TikTok / social).
+  // Landing below is the fallback: desktop, ?stay=1, internal nav, or if the
+  // redirect fails (try/catch fails open). Uses a Universal Link (apps.apple.com),
+  // NOT a native itms-apps:// scheme — the native scheme is what webviews block.
+  // Android is NOT redirected yet (Play listing still 404) — it falls to the
+  // landing's "coming soon". Flip the Android branch on when Play goes live.
+  (function () {
+    try {
+      var loc = window.location;
+      var params = new URLSearchParams(loc.search);
+      if (params.has('stay')) return;
+      if (document.referrer && document.referrer.indexOf(loc.origin) === 0) return;
+      var ua = navigator.userAgent || '';
+      var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+      if (!isIOS) return; // Android + desktop stay on the landing for now
+      var src = params.get('utm_source') || params.get('from') || params.get('ref') || 'bio';
+      loc.replace('https://apps.apple.com/app/id6783449445?ct=' + encodeURIComponent(src));
+      // ANDROID LAUNCH: replace the `if (!isIOS) return;` line above with:
+      //   var isAndroid = /Android/.test(ua);
+      //   if (!isIOS && !isAndroid) return;
+      // and, inside, branch Android to:
+      //   loc.replace('https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer='
+      //     + encodeURIComponent('utm_source=' + src + '&utm_medium=social'));
+    } catch (e) { /* fail open — show the landing page */ }
+  })();
+</script>
 <!--
-  Bio landing page.  Bio URL:  https://vialsgame.com/get
-  NO auto-redirect. In-app browsers (TikTok / Instagram / Facebook) block any
-  automatic jump to a store (Universal Links / App Links don't fire from a
-  webview, and native schemes are blocked without a user gesture). The store
-  only opens on a TAP. So this is a plain landing page whose store buttons are
-  real <a href> links — tapping one is the gesture the OS honours. (Same pattern
-  working indie studios use for their single bio link.)
+  Bio landing page + mobile auto-redirect (script above). Bio URL: https://vialsgame.com/get
+  On iOS the store opens immediately; the buttons below are the fallback for
+  desktop / Android / any case the redirect can't run.
 
   App Store is live -> primary button. Google Play flips from "coming soon" to
   a live link the moment the Play listing is published (one-line change below,
