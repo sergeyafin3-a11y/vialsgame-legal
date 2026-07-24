@@ -5,97 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
-<script>
-  // Store redirect with a landing fallback, decided BY BROWSER (not after failure).
-  //
-  // Why detection and not try/catch: inside in-app browsers (TikTok / Instagram /
-  // Facebook) a programmatic jump to the App Store (location.replace to a Universal
-  // Link) is swallowed by the webview — it paints its OWN blank page + "Выполнить
-  // действие не удалось". That happens AFTER our page unloads, so it's impossible to
-  // catch and recover from in JS. Verified on-device twice. Our code is byte-for-byte
-  // pufferfishgame.com's approach and still blanks, so it's domain/webview policy, not
-  // something the page can fix. So: redirect ONLY where it actually works (real
-  // Safari/Chrome), and in in-app browsers show the landing whose <a href> tap button
-  // DOES open the store (a real user tap is a gesture the webview honours).
-  //
-  // Result: real browser on iPhone -> store, 0 taps. TikTok/IG/FB -> clean landing,
-  // 1 tap, never a blank screen. Desktop / Android -> landing.
-  (function () {
-    try {
-      var loc = window.location;
-      var params = new URLSearchParams(loc.search);
-      if (params.has('stay')) return;                 // manual escape hatch
-      if (document.referrer && document.referrer.indexOf(loc.origin) === 0) return;
-      var ua = navigator.userAgent || '';
-      var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-      if (!isIOS) return;                             // Android + desktop -> landing
-      // In-app browsers blank out on a programmatic store jump -> never redirect them.
-      var inApp = /BytedanceWebview|musical_ly|TikTok|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(ua);
-      if (inApp) return;                              // -> landing + tap button
-      var src = params.get('utm_source') || params.get('from') || params.get('ref') || 'bio';
-      loc.replace('https://apps.apple.com/us/app/vials-asmr-sand-sort-puzzle/id6783449445?ct=' + encodeURIComponent(src));
-      // ANDROID LAUNCH: replace the `if (!isIOS) return;` line above with:
-      //   var isAndroid = /Android/.test(ua);
-      //   if (!isIOS && !isAndroid) return;
-      // and branch Android (real browsers only) to:
-      //   loc.replace('https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer='
-      //     + encodeURIComponent('utm_source=' + src + '&utm_medium=social'));
-    } catch (e) { /* fail open — show the landing page */ }
-  })();
-</script>
-<!--
-  Bio landing page + mobile auto-redirect (script above). Bio URL: https://vialsgame.com/get
-  On iOS the store opens immediately; the buttons below are the fallback for
-  desktop / Android / any case the redirect can't run.
-
-  App Store is live -> primary button. Google Play flips from "coming soon" to
-  a live link the moment the Play listing is published (one-line change below,
-  bio link never changes).
--->
+<!-- DIAGNOSTIC PAGE (temporary). No auto-redirect. Four labelled App Store
+     buttons so we can isolate WHY the store won't open from TikTok's webview.
+     Restore the real landing after the test. -->
 <style>
   :root { color-scheme: light dark; }
-  html, body { height: 100%; }
   body {
     margin: 0; min-height: 100vh; box-sizing: border-box;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 44px 22px; text-align: center;
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 40px 22px; text-align: center;
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #1c1b1a; background: #fbf8f3;
   }
-  .mark { margin: 0 0 6px; font-size: 52px; font-weight: 700; letter-spacing: -0.02em;
-          font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; }
-  .tag  { margin: 0 0 36px; font-size: 15px; color: #6b6660; }
-  .btns { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 340px; }
-  .btn  { display: block; padding: 16px 20px; border-radius: 14px;
-          font-size: 17px; font-weight: 600; text-decoration: none;
-          border: 1px solid transparent; }
-  .btn.ios  { background: #1c1b1a; color: #fbf8f3; }
-  .btn.soon { background: transparent; color: #9a948b; border-color: #e6e0d6; cursor: default; }
-  .btn.soon small { display: block; font-weight: 400; font-size: 12px; opacity: .8; }
-  .foot { margin-top: 40px; font-size: 13px; color: #9a948b; }
-  .foot a { color: #b4612a; }
+  .mark { margin: 0 0 4px; font-size: 40px; font-weight: 700; letter-spacing: -0.02em;
+          font-family: "Iowan Old Style", Georgia, serif; }
+  .note { margin: 0 0 28px; font-size: 13px; color: #6b6660; max-width: 340px; }
+  .btns { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
+  .btn  { display: block; padding: 15px 16px; border-radius: 13px;
+          font-size: 15px; font-weight: 600; text-decoration: none;
+          background: #1c1b1a; color: #fbf8f3; }
+  .btn small { display: block; font-weight: 400; font-size: 11px; opacity: .7; margin-top: 3px;
+               word-break: break-all; }
   @media (prefers-color-scheme: dark) {
     body { color: #ece7df; background: #1c1b1a; }
-    .tag { color: #9a948b; }
-    .btn.ios  { background: #ece7df; color: #1c1b1a; }
-    .btn.soon { color: #6b6660; border-color: #2f2c28; }
+    .note { color: #9a948b; }
+    .btn { background: #ece7df; color: #1c1b1a; }
   }
 </style>
 </head>
 <body>
-  <h1 class="mark">Vials</h1>
-  <p class="tag">ASMR Sand Sort Puzzle · free · play offline</p>
+  <h1 class="mark">Тест ссылок</h1>
+  <p class="note">Открой эту страницу в TikTok и нажми каждую кнопку по очереди. Запомни, какие открыли App Store, а какие дали «Выполнить действие не удалось».</p>
 
   <div class="btns">
-    <a class="btn ios" href="https://apps.apple.com/us/app/vials-asmr-sand-sort-puzzle/id6783449445?ct=tiktok_bio"
-       target="_blank" rel="noopener">Download on the App Store</a>
+    <a class="btn" href="https://apps.apple.com/us/app/vials-asmr-sand-sort-puzzle/id6783449445?ct=test1"
+       target="_blank" rel="noopener">1. Наша · US-слаг<small>apps.apple.com/us/app/vials-asmr-sand-sort-puzzle/id6783449445</small></a>
 
-    <!-- ANDROID LAUNCH: replace this whole <span> with the live link:
-    <a class="btn ios" href="https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer=utm_source%3Dtiktok%26utm_medium%3Dbio" target="_blank" rel="noopener">Get it on Google Play</a>
-    -->
-    <span class="btn soon">Google Play<small>coming very soon</small></span>
+    <a class="btn" href="https://apps.apple.com/ru/app/vials-%D1%81%D0%BE%D1%80%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%BA%D0%B0-%D0%BF%D0%B5%D1%81%D0%BA%D0%B0-asmr/id6783449445?ct=test2"
+       target="_blank" rel="noopener">2. Наша · RU-слаг (твой регион)<small>apps.apple.com/ru/app/vials-сортировка-песка-asmr/id6783449445</small></a>
+
+    <a class="btn" href="https://apps.apple.com/app/id6783449445?ct=test3"
+       target="_blank" rel="noopener">3. Наша · без региона и слага<small>apps.apple.com/app/id6783449445</small></a>
+
+    <a class="btn" href="https://apps.apple.com/us/app/pufferfish/id6757396593?ct=test4"
+       target="_blank" rel="noopener">4. Pufferfish (контроль, чужое приложение)<small>apps.apple.com/us/app/pufferfish/id6757396593</small></a>
   </div>
-
-  <p class="foot"><a href="https://vialsgame.com/">vialsgame.com</a></p>
 </body>
 </html>
