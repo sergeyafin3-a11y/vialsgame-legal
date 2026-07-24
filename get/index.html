@@ -3,55 +3,65 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Get Vials</title>
+<title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
 <!--
-  Smart install link.  Bio URL:  https://vialsgame.com/get
-  Zero buttons. Opens the store APP from inside in-app browsers (TikTok /
-  Instagram / Facebook), where Apple Universal Links / Android App Links do
-  NOT fire from a webview.
+  Bio landing page.  Bio URL:  https://vialsgame.com/get
+  NO auto-redirect. In-app browsers (TikTok / Instagram / Facebook) block any
+  automatic jump to a store (Universal Links / App Links don't fire from a
+  webview, and native schemes are blocked without a user gesture). The store
+  only opens on a TAP. So this is a plain landing page whose store buttons are
+  real <a href> links — tapping one is the gesture the OS honours. (Same pattern
+  working indie studios use for their single bio link.)
 
-  Trick: redirect to the store's NATIVE SCHEME (itms-apps:// / market://),
-  which the webview hands straight to the OS -> the store app opens. A quiet
-  https fallback loads the web store listing only if the scheme didn't take
-  (page still visible after a moment) — no error dialog either way.
-
-  iOS -> App Store, Android -> Google Play. Campaign tokens carried on the
-  https fallback so store analytics still see TikTok traffic.
+  App Store is live -> primary button. Google Play flips from "coming soon" to
+  a live link the moment the Play listing is published (one-line change below,
+  bio link never changes).
 -->
-<script>
-  var ua = navigator.userAgent || "";
-  var isAndroid = /Android/.test(ua);
-
-  var IOS_SCHEME = "itms-apps://apps.apple.com/app/id6783449445?ct=tiktok_bio";
-  var IOS_WEB    = "https://apps.apple.com/app/id6783449445?ct=tiktok_bio";
-  var AND_SCHEME = "market://details?id=com.vialsgame.app&referrer=utm_source%3Dtiktok%26utm_medium%3Dbio";
-  var AND_WEB    = "https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer=utm_source%3Dtiktok%26utm_medium%3Dbio";
-
-  var scheme = isAndroid ? AND_SCHEME : IOS_SCHEME;
-  var web    = isAndroid ? AND_WEB    : IOS_WEB;
-
-  // 1) hand the native store scheme to the OS -> opens the store app
-  window.location.href = scheme;
-
-  // 2) if we're still here a moment later, the scheme didn't take —
-  //    quietly load the web store listing (no error dialog).
-  setTimeout(function () {
-    if (document.visibilityState === "visible") {
-      window.location.href = web;
-    }
-  }, 1200);
-</script>
 <style>
-  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
-         font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-         color:#1c1b1a; background:#fbf8f3; }
-  a { color:#b4612a; }
-  @media (prefers-color-scheme: dark) { body { color:#ece7df; background:#1c1b1a; } }
+  :root { color-scheme: light dark; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; min-height: 100vh; box-sizing: border-box;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 44px 22px; text-align: center;
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1c1b1a; background: #fbf8f3;
+  }
+  .mark { margin: 0 0 6px; font-size: 52px; font-weight: 700; letter-spacing: -0.02em;
+          font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; }
+  .tag  { margin: 0 0 36px; font-size: 15px; color: #6b6660; }
+  .btns { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 340px; }
+  .btn  { display: block; padding: 16px 20px; border-radius: 14px;
+          font-size: 17px; font-weight: 600; text-decoration: none;
+          border: 1px solid transparent; }
+  .btn.ios  { background: #1c1b1a; color: #fbf8f3; }
+  .btn.soon { background: transparent; color: #9a948b; border-color: #e6e0d6; cursor: default; }
+  .btn.soon small { display: block; font-weight: 400; font-size: 12px; opacity: .8; }
+  .foot { margin-top: 40px; font-size: 13px; color: #9a948b; }
+  .foot a { color: #b4612a; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #ece7df; background: #1c1b1a; }
+    .tag { color: #9a948b; }
+    .btn.ios  { background: #ece7df; color: #1c1b1a; }
+    .btn.soon { color: #6b6660; border-color: #2f2c28; }
+  }
 </style>
 </head>
 <body>
-  <!-- shown only if JS is disabled -->
-  <p>Opening the store… <a href="https://apps.apple.com/app/id6783449445?ct=tiktok_bio">continue</a></p>
+  <h1 class="mark">Vials</h1>
+  <p class="tag">ASMR Sand Sort Puzzle · free · play offline</p>
+
+  <div class="btns">
+    <a class="btn ios" href="https://apps.apple.com/app/id6783449445?ct=tiktok_bio"
+       target="_blank" rel="noopener">Download on the App Store</a>
+
+    <!-- ANDROID LAUNCH: replace this whole <span> with the live link:
+    <a class="btn ios" href="https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer=utm_source%3Dtiktok%26utm_medium%3Dbio" target="_blank" rel="noopener">Get it on Google Play</a>
+    -->
+    <span class="btn soon">Google Play<small>coming very soon</small></span>
+  </div>
+
+  <p class="foot"><a href="https://vialsgame.com/">vialsgame.com</a></p>
 </body>
 </html>
