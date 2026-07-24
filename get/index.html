@@ -6,51 +6,40 @@
 <title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
 <script>
-  // Bio link:  https://vialsgame.com/get
-  //
-  // HOW THE STORE ACTUALLY OPENS FROM TIKTOK (verified on-device):
-  // Tapping a link in the TikTok *bio* shows TikTok's "leaving TikTok" screen
-  // (tiktoklinksafety.com) with an "Open" button. "Open" hands the URL to the
-  // EXTERNAL browser / OS — and there this redirect fires and the App Store
-  // opens natively. This is exactly how pufferfishgame.com works. The magic is
-  // the bio → "Open" → external path, NOT the page code or the domain.
-  //
-  // Opening this page *inside* an in-app webview (TikTok/IG/FB) instead can't
-  // hand off to the store at all, so we DON'T auto-redirect there (it would just
-  // blank out) — we show the landing whose tap button is the fallback.
-  //
-  // So: external Safari/Chrome (incl. the bio "Open" path) -> straight to store.
-  // In-app webview -> landing + tap. Desktop / Android -> landing.
+  // In-app browsers (TikTok / Instagram / Facebook …) trap the page in a webview
+  // that can't hand off to the App Store — no link or redirect escapes it, and
+  // JS can't force the system browser. The ONLY escape is the user tapping the
+  // in-app "⋯ → Open in browser". So:
+  //   - Real Safari/Chrome on iOS -> auto-redirect straight to the App Store.
+  //   - In-app webview -> DON'T redirect (it just fails); instead show a big
+  //     "Open in browser" instruction pointing at the ⋯ menu. Once in the real
+  //     browser the redirect above fires and the store opens.
+  //   - Desktop / Android real browser -> plain landing.
+  // Detection also honours ?stay=1 (force landing) and ?force=inapp (preview the
+  // instruction on any browser).
+  window.__inApp = /BytedanceWebview|musical_ly|TikTok|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(navigator.userAgent || '');
   (function () {
     try {
       var loc = window.location;
       var params = new URLSearchParams(loc.search);
-      if (params.has('stay')) return;                 // manual escape hatch
+      if (params.get('force') === 'inapp') { window.__inApp = true; return; }
+      if (params.has('stay')) return;
       if (document.referrer && document.referrer.indexOf(loc.origin) === 0) return;
       var ua = navigator.userAgent || '';
       var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-      if (!isIOS) return;                             // Android + desktop -> landing
-      // In-app browsers can't hand off to the store -> don't redirect them.
-      var inApp = /BytedanceWebview|musical_ly|TikTok|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(ua);
-      if (inApp) return;                              // -> landing + tap button
+      if (!isIOS) return;                 // Android + desktop -> landing
+      if (window.__inApp) return;         // in-app -> show the instruction below
       var src = params.get('utm_source') || params.get('from') || params.get('ref') || 'bio';
-      // Region-agnostic App Store link (no country / slug) -> resolves to the
-      // viewer's own storefront on-device.
       loc.replace('https://apps.apple.com/app/id6783449445?ct=' + encodeURIComponent(src));
-      // ANDROID LAUNCH: replace the `if (!isIOS) return;` line above with:
-      //   var isAndroid = /Android/.test(ua);
-      //   if (!isIOS && !isAndroid) return;
-      // and branch Android (external browsers only) to:
-      //   loc.replace('https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer='
-      //     + encodeURIComponent('utm_source=' + src + '&utm_medium=social'));
-    } catch (e) { /* fail open — show the landing page */ }
+    } catch (e) { /* fail open -> landing */ }
   })();
 </script>
 <style>
   :root { color-scheme: light dark; }
   html, body { height: 100%; }
+  * { box-sizing: border-box; }
   body {
-    margin: 0; min-height: 100vh; box-sizing: border-box;
+    margin: 0; min-height: 100vh;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 44px 22px; text-align: center;
     font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -68,28 +57,79 @@
   .btn.soon small { display: block; font-weight: 400; font-size: 12px; opacity: .8; }
   .foot { margin-top: 40px; font-size: 13px; color: #9a948b; }
   .foot a { color: #b4612a; }
+
+  /* ---- in-app "open in browser" instruction ---- */
+  #inapp { display: none; }
+  .arrow {
+    position: fixed; top: 6px; right: 14px; z-index: 5;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: #b4612a; font-weight: 700; font-size: 13px;
+    animation: bob 1.1s ease-in-out infinite;
+  }
+  .arrow svg { width: 30px; height: 30px; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+  .card {
+    width: 100%; max-width: 360px; margin: 0 auto;
+    background: #fff; border: 1px solid #ece3d4; border-radius: 20px;
+    padding: 26px 22px; box-shadow: 0 10px 40px rgba(28,27,26,.08);
+  }
+  .step { display: flex; align-items: center; gap: 12px; text-align: left;
+          font-size: 16px; line-height: 1.4; margin: 0 0 14px; }
+  .step:last-of-type { margin-bottom: 0; }
+  .num  { flex: none; width: 26px; height: 26px; border-radius: 50%;
+          background: #1c1b1a; color: #fbf8f3; font-size: 14px; font-weight: 700;
+          display: flex; align-items: center; justify-content: center; }
+  .dots { font-weight: 800; letter-spacing: 1px; }
+  .or   { margin: 22px 0 0; font-size: 14px; color: #6b6660; }
+  .or b { color: #1c1b1a; }
   @media (prefers-color-scheme: dark) {
     body { color: #ece7df; background: #1c1b1a; }
     .tag { color: #9a948b; }
     .btn.ios  { background: #ece7df; color: #1c1b1a; }
     .btn.soon { color: #6b6660; border-color: #2f2c28; }
+    .card { background: #26231f; border-color: #35302a; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+    .num  { background: #ece7df; color: #1c1b1a; }
+    .or b { color: #ece7df; }
+    .arrow { color: #e0894f; }
   }
 </style>
 </head>
 <body>
-  <h1 class="mark">Vials</h1>
-  <p class="tag">ASMR Sand Sort Puzzle · free · play offline</p>
-
-  <div class="btns">
-    <a class="btn ios" href="https://apps.apple.com/app/id6783449445?ct=tiktok_bio"
-       target="_blank" rel="noopener">Download on the App Store</a>
-
-    <!-- ANDROID LAUNCH: replace this whole <span> with the live link:
-    <a class="btn ios" href="https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer=utm_source%3Dtiktok%26utm_medium%3Dbio" target="_blank" rel="noopener">Get it on Google Play</a>
-    -->
-    <span class="btn soon">Google Play<small>coming very soon</small></span>
+  <!-- Normal landing (real browsers) -->
+  <div id="landing">
+    <h1 class="mark">Vials</h1>
+    <p class="tag">ASMR Sand Sort Puzzle · free · play offline</p>
+    <div class="btns">
+      <a class="btn ios" href="https://apps.apple.com/app/id6783449445?ct=tiktok_bio"
+         target="_blank" rel="noopener">Download on the App Store</a>
+      <!-- ANDROID LAUNCH: replace this <span> with the live Play link -->
+      <span class="btn soon">Google Play<small>coming very soon</small></span>
+    </div>
+    <p class="foot"><a href="https://vialsgame.com/">vialsgame.com</a></p>
   </div>
 
-  <p class="foot"><a href="https://vialsgame.com/">vialsgame.com</a></p>
+  <!-- In-app browser: guide the user out to the real browser -->
+  <div id="inapp">
+    <div class="arrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+           stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      <span>⋯ up here</span>
+    </div>
+    <h1 class="mark">Vials</h1>
+    <p class="tag">ASMR Sand Sort Puzzle · free</p>
+    <div class="card">
+      <div class="step"><span class="num">1</span><span>Tap the <span class="dots">⋯</span> menu (top-right)</span></div>
+      <div class="step"><span class="num">2</span><span>Choose <b>“Open in browser”</b></span></div>
+      <div class="step"><span class="num">3</span><span>The App Store opens automatically</span></div>
+      <p class="or">…or just search <b>“Vials”</b> in the App Store.</p>
+    </div>
+  </div>
+
+  <script>
+    if (window.__inApp) {
+      document.getElementById('landing').style.display = 'none';
+      document.getElementById('inapp').style.display = 'block';
+    }
+  </script>
 </body>
 </html>
