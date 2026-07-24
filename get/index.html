@@ -6,31 +6,48 @@
 <title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
 <script>
-  // In-app browsers (TikTok / Instagram / Facebook …) trap the page in a webview
-  // that can't hand off to the App Store — no link or redirect escapes it, and
-  // JS can't force the system browser. The ONLY escape is the user tapping the
-  // in-app "⋯ → Open in browser". So:
-  //   - Real Safari/Chrome on iOS -> auto-redirect straight to the App Store.
-  //   - In-app webview -> DON'T redirect (it just fails); instead show a big
-  //     "Open in browser" instruction pointing at the ⋯ menu. Once in the real
-  //     browser the redirect above fires and the store opens.
-  //   - Desktop / Android real browser -> plain landing.
-  // Detection also honours ?stay=1 (force landing) and ?force=inapp (preview the
-  // instruction on any browser).
-  window.__inApp = /BytedanceWebview|musical_ly|TikTok|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(navigator.userAgent || '');
+  // Bio link: https://vialsgame.com/get  — one link, both platforms.
+  //
+  // In-app browsers (TikTok / Instagram / FB …) trap the page in a webview that
+  // can't hand off to a store — no link/redirect escapes it and JS can't force
+  // the system browser. Only the user tapping "⋯ → Open in browser" gets out.
+  // So:
+  //   - Real Safari on iOS      -> auto-redirect to the App Store.
+  //   - Real Chrome on Android  -> auto-redirect to the Google Play listing.
+  //       (Pre-launch the Play page 404s by design — the moment the listing is
+  //        published it just starts working, no change needed here.)
+  //   - In-app webview          -> platform-aware "Open in browser" instruction.
+  //   - Desktop                 -> plain landing with both store buttons.
+  //
+  // Preview/debug params: ?stay=1 force landing · ?force=inapp show instruction ·
+  //   ?os=ios|android override platform.
+  var APPSTORE = 'https://apps.apple.com/app/id6783449445';
+  var PLAY_ID  = 'com.vialsgame.app';
   (function () {
     try {
       var loc = window.location;
       var params = new URLSearchParams(loc.search);
-      if (params.get('force') === 'inapp') { window.__inApp = true; return; }
-      if (params.has('stay')) return;
-      if (document.referrer && document.referrer.indexOf(loc.origin) === 0) return;
       var ua = navigator.userAgent || '';
-      var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-      if (!isIOS) return;                 // Android + desktop -> landing
-      if (window.__inApp) return;         // in-app -> show the instruction below
-      var src = params.get('utm_source') || params.get('from') || params.get('ref') || 'bio';
-      loc.replace('https://apps.apple.com/app/id6783449445?ct=' + encodeURIComponent(src));
+      var oso = params.get('os');
+      window.__isIOS     = oso ? oso === 'ios'     : (/iPad|iPhone|iPod/.test(ua) && !window.MSStream);
+      window.__isAndroid = oso ? oso === 'android' : /Android/.test(ua);
+      window.__inApp = params.get('force') === 'inapp' ||
+        /BytedanceWebview|musical_ly|TikTok|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(ua);
+      window.__src = params.get('utm_source') || params.get('from') || params.get('ref') || 'bio';
+
+      if (params.get('force') === 'inapp') return;   // preview the instruction
+      if (params.has('stay')) return;                 // force landing
+      if (document.referrer && document.referrer.indexOf(loc.origin) === 0) return;
+      if (window.__inApp) return;                     // in-app -> instruction below
+
+      // Real external browser -> straight to the right store.
+      if (window.__isIOS) {
+        loc.replace(APPSTORE + '?ct=' + encodeURIComponent(window.__src));
+      } else if (window.__isAndroid) {
+        loc.replace('https://play.google.com/store/apps/details?id=' + PLAY_ID +
+          '&referrer=' + encodeURIComponent('utm_source=' + window.__src + '&utm_medium=bio'));
+      }
+      // desktop -> fall through to landing
     } catch (e) { /* fail open -> landing */ }
   })();
 </script>
@@ -51,10 +68,7 @@
   .btns { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 340px; }
   .btn  { display: block; padding: 16px 20px; border-radius: 14px;
           font-size: 17px; font-weight: 600; text-decoration: none;
-          border: 1px solid transparent; }
-  .btn.ios  { background: #1c1b1a; color: #fbf8f3; }
-  .btn.soon { background: transparent; color: #9a948b; border-color: #e6e0d6; cursor: default; }
-  .btn.soon small { display: block; font-weight: 400; font-size: 12px; opacity: .8; }
+          border: 1px solid transparent; background: #1c1b1a; color: #fbf8f3; }
   .foot { margin-top: 40px; font-size: 13px; color: #9a948b; }
   .foot a { color: #b4612a; }
 
@@ -85,8 +99,7 @@
   @media (prefers-color-scheme: dark) {
     body { color: #ece7df; background: #1c1b1a; }
     .tag { color: #9a948b; }
-    .btn.ios  { background: #ece7df; color: #1c1b1a; }
-    .btn.soon { color: #6b6660; border-color: #2f2c28; }
+    .btn  { background: #ece7df; color: #1c1b1a; }
     .card { background: #26231f; border-color: #35302a; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
     .num  { background: #ece7df; color: #1c1b1a; }
     .or b { color: #ece7df; }
@@ -95,20 +108,21 @@
 </style>
 </head>
 <body>
-  <!-- Normal landing (real browsers) -->
+  <!-- Normal landing (real browsers / desktop) -->
   <div id="landing">
     <h1 class="mark">Vials</h1>
     <p class="tag">ASMR Sand Sort Puzzle · free · play offline</p>
     <div class="btns">
-      <a class="btn ios" href="https://apps.apple.com/app/id6783449445?ct=tiktok_bio"
+      <a class="btn" id="iosBtn" href="https://apps.apple.com/app/id6783449445?ct=tiktok_bio"
          target="_blank" rel="noopener">Download on the App Store</a>
-      <!-- ANDROID LAUNCH: replace this <span> with the live Play link -->
-      <span class="btn soon">Google Play<small>coming very soon</small></span>
+      <a class="btn" id="androidBtn"
+         href="https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer=utm_source%3Dbio%26utm_medium%3Dbio"
+         target="_blank" rel="noopener">Get it on Google Play</a>
     </div>
     <p class="foot"><a href="https://vialsgame.com/">vialsgame.com</a></p>
   </div>
 
-  <!-- In-app browser: guide the user out to the real browser -->
+  <!-- In-app browser: guide the user out to the real browser (text set per platform) -->
   <div id="inapp">
     <div class="arrow">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
@@ -120,16 +134,24 @@
     <div class="card">
       <div class="step"><span class="num">1</span><span>Tap the <span class="dots">⋯</span> menu (top-right)</span></div>
       <div class="step"><span class="num">2</span><span>Choose <b>“Open in browser”</b></span></div>
-      <div class="step"><span class="num">3</span><span>The App Store opens automatically</span></div>
-      <p class="or">…or just search <b>“Vials”</b> in the App Store.</p>
+      <div class="step"><span class="num">3</span><span id="step3">The store opens automatically</span></div>
+      <p class="or" id="orLine">…or just search <b>“Vials”</b> in your app store.</p>
     </div>
   </div>
 
   <script>
-    if (window.__inApp) {
-      document.getElementById('landing').style.display = 'none';
-      document.getElementById('inapp').style.display = 'block';
-    }
+    (function () {
+      // Platform-aware wording for the in-app instruction.
+      if (window.__inApp) {
+        var isIOS = window.__isIOS, isAndroid = window.__isAndroid;
+        var store = isAndroid && !isIOS ? 'Google Play' : (isIOS ? 'App Store' : 'store');
+        var where = isAndroid && !isIOS ? 'on Google Play' : (isIOS ? 'in the App Store' : 'in your app store');
+        document.getElementById('step3').textContent = 'The ' + store + ' opens automatically';
+        document.getElementById('orLine').innerHTML = '…or just search <b>“Vials”</b> ' + where + '.';
+        document.getElementById('landing').style.display = 'none';
+        document.getElementById('inapp').style.display = 'block';
+      }
+    })();
   </script>
 </body>
 </html>
