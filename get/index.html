@@ -7,19 +7,40 @@
 <meta name="robots" content="noindex">
 <!--
   Smart install link.  Bio URL:  https://vialsgame.com/get
-  Pure redirect, zero buttons: iOS -> App Store, Android -> Google Play,
-  anything else -> App Store web listing. Campaign tokens let store
-  analytics see TikTok traffic. (Before Google Play is live an Android
-  visitor briefly hits Play's "not found" — accepted: real traffic is at
-  the simultaneous launch moment when both stores are live.)
+  Zero buttons. Opens the store APP from inside in-app browsers (TikTok /
+  Instagram / Facebook), where Apple Universal Links / Android App Links do
+  NOT fire from a webview.
+
+  Trick: redirect to the store's NATIVE SCHEME (itms-apps:// / market://),
+  which the webview hands straight to the OS -> the store app opens. A quiet
+  https fallback loads the web store listing only if the scheme didn't take
+  (page still visible after a moment) — no error dialog either way.
+
+  iOS -> App Store, Android -> Google Play. Campaign tokens carried on the
+  https fallback so store analytics still see TikTok traffic.
 -->
 <script>
-  var APPSTORE = "https://apps.apple.com/app/id6783449445?ct=tiktok_bio";
-  var PLAY = "https://play.google.com/store/apps/details?id=com.vialsgame.app" +
-             "&referrer=utm_source%3Dtiktok%26utm_medium%3Dbio";
   var ua = navigator.userAgent || "";
   var isAndroid = /Android/.test(ua);
-  location.replace(isAndroid ? PLAY : APPSTORE);
+
+  var IOS_SCHEME = "itms-apps://apps.apple.com/app/id6783449445?ct=tiktok_bio";
+  var IOS_WEB    = "https://apps.apple.com/app/id6783449445?ct=tiktok_bio";
+  var AND_SCHEME = "market://details?id=com.vialsgame.app&referrer=utm_source%3Dtiktok%26utm_medium%3Dbio";
+  var AND_WEB    = "https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer=utm_source%3Dtiktok%26utm_medium%3Dbio";
+
+  var scheme = isAndroid ? AND_SCHEME : IOS_SCHEME;
+  var web    = isAndroid ? AND_WEB    : IOS_WEB;
+
+  // 1) hand the native store scheme to the OS -> opens the store app
+  window.location.href = scheme;
+
+  // 2) if we're still here a moment later, the scheme didn't take —
+  //    quietly load the web store listing (no error dialog).
+  setTimeout(function () {
+    if (document.visibilityState === "visible") {
+      window.location.href = web;
+    }
+  }, 1200);
 </script>
 <style>
   body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
