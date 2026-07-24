@@ -6,10 +6,15 @@
 <title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
 <script>
-  // Mobile visitors -> straight to the store (saves a tap from TikTok / social).
-  // Landing below is the fallback: desktop, ?stay=1, internal nav, or if the
-  // redirect fails (try/catch fails open). Uses a Universal Link (apps.apple.com),
-  // NOT a native itms-apps:// scheme — the native scheme is what webviews block.
+  // Mobile visitors -> straight to the store (works inside TikTok/Instagram/etc.).
+  // CRITICAL: use the FULL CANONICAL App Store URL
+  //   https://apps.apple.com/us/app/<slug>/id<num>
+  // The short form (apps.apple.com/app/id<num>) 301-redirects to the canonical
+  // one, and that extra 301 hop is what makes in-app webviews choke with a blank
+  // page + "Выполнить действие не удалось". Linking straight to the canonical URL
+  // lets iOS recognise it as an App Store Universal Link and hand off to the App
+  // Store app immediately — this is exactly why pufferfishgame.com works from TikTok.
+  // Landing below is the fallback: desktop, ?stay=1, internal nav, try/catch fail-open.
   // Android is NOT redirected yet (Play listing still 404) — it falls to the
   // landing's "coming soon". Flip the Android branch on when Play goes live.
   (function () {
@@ -22,7 +27,7 @@
       var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
       if (!isIOS) return; // Android + desktop stay on the landing for now
       var src = params.get('utm_source') || params.get('from') || params.get('ref') || 'bio';
-      loc.replace('https://apps.apple.com/app/id6783449445?ct=' + encodeURIComponent(src));
+      loc.replace('https://apps.apple.com/us/app/vials-asmr-sand-sort-puzzle/id6783449445?ct=' + encodeURIComponent(src));
       // ANDROID LAUNCH: replace the `if (!isIOS) return;` line above with:
       //   var isAndroid = /Android/.test(ua);
       //   if (!isIOS && !isAndroid) return;
@@ -76,7 +81,7 @@
   <p class="tag">ASMR Sand Sort Puzzle · free · play offline</p>
 
   <div class="btns">
-    <a class="btn ios" href="https://apps.apple.com/app/id6783449445?ct=tiktok_bio"
+    <a class="btn ios" href="https://apps.apple.com/us/app/vials-asmr-sand-sort-puzzle/id6783449445?ct=tiktok_bio"
        target="_blank" rel="noopener">Download on the App Store</a>
 
     <!-- ANDROID LAUNCH: replace this whole <span> with the live link:
