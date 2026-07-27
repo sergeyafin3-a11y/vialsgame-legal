@@ -23,6 +23,15 @@
   //   ?os=ios|android override platform.
   var APPSTORE = 'https://apps.apple.com/app/id6783449445';
   var PLAY_ID  = 'com.vialsgame.app';
+  // Apple only feeds `ct` into App Analytics → Campaigns when the link is a
+  // canonical campaign link: provider token + campaign token + mt=8. Without
+  // `pt` the tag is simply dropped, which is why "Кампании" stayed empty.
+  // `pt` from ASC → Аналитика → Кампании (2026-07-27). NB: Apple needs installs
+  // from 5 distinct Apple Accounts before it will show a campaign at all.
+  var APPLE_PT = '128892810';
+  function iosStoreUrl(src) {
+    return APPSTORE + '?pt=' + APPLE_PT + '&ct=' + encodeURIComponent(src) + '&mt=8';
+  }
   (function () {
     try {
       var loc = window.location;
@@ -46,7 +55,7 @@
 
       // Real external browser -> straight to the right store.
       if (window.__isIOS) {
-        loc.replace(APPSTORE + '?ct=' + encodeURIComponent(window.__src));
+        loc.replace(iosStoreUrl(window.__src));
       } else if (window.__isAndroid) {
         loc.replace('https://play.google.com/store/apps/details?id=' + PLAY_ID +
           '&referrer=' + encodeURIComponent('utm_source=' + window.__src + '&utm_medium=bio'));
@@ -117,7 +126,7 @@
     <h1 class="mark">Vials</h1>
     <p class="tag">ASMR Sand Sort Puzzle · free · play offline</p>
     <div class="btns">
-      <a class="btn" id="iosBtn" href="https://apps.apple.com/app/id6783449445?ct=bio"
+      <a class="btn" id="iosBtn" href="https://apps.apple.com/app/id6783449445?pt=128892810&amp;ct=bio&amp;mt=8"
          target="_blank" rel="noopener">Download on the App Store</a>
       <a class="btn" id="androidBtn"
          href="https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer=utm_source%3Dbio%26utm_medium%3Dbio"
@@ -149,7 +158,7 @@
       // The hrefs in the markup are only the no-JS fallback.
       var src = window.__src || 'bio';
       document.getElementById('iosBtn').href =
-        APPSTORE + '?ct=' + encodeURIComponent(src);
+        iosStoreUrl(src);
       document.getElementById('androidBtn').href =
         'https://play.google.com/store/apps/details?id=' + PLAY_ID +
         '&referrer=' + encodeURIComponent('utm_source=' + src + '&utm_medium=bio');
