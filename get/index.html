@@ -48,11 +48,14 @@
       var oso = params.get('os');
       window.__isIOS     = oso ? oso === 'ios'     : (/iPad|iPhone|iPod/.test(ua) && !window.MSStream);
       window.__isAndroid = oso ? oso === 'android' : /Android/.test(ua);
-      window.__inApp = params.get('force') === 'inapp' ||
-        /BytedanceWebview|musical_ly|TikTok|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(ua);
+      window.__isTikTok = params.get('force') === 'tiktok' ||
+        /BytedanceWebview|musical_ly|TikTok|Trill|aweme/i.test(ua);
+      window.__inApp = params.get('force') === 'inapp' || window.__isTikTok ||
+        /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(ua);
       window.__src = params.get('utm_source') || params.get('from') || params.get('ref') || 'bio';
 
-      if (params.get('force') === 'inapp') return;   // preview the webview UI
+      if (params.get('force') === 'inapp' ||
+          params.get('force') === 'tiktok') return;  // preview the webview UI
       if (params.has('stay')) return;                 // force landing
       if (document.referrer && document.referrer.indexOf(loc.origin) === 0) return;
       if (window.__inApp) return;                     // in-app -> store button below
@@ -88,16 +91,44 @@
   .foot { margin-top: 40px; font-size: 13px; color: #9a948b; }
   .foot a { color: #b4612a; }
 
-  /* ---- in-app webview: one tap to the store ---- */
+  /* ---- in-app webview: one tap to the store (non-TikTok) ---- */
   #inapp { display: none; }
   .btn.alt { background: transparent; color: #1c1b1a; border-color: #d9d0c1; }
   .hint  { margin: 26px 0 0; font-size: 13px; color: #9a948b; }
   .dots  { font-weight: 800; letter-spacing: 1px; }
+
+  /* ---- TikTok webview: store links are blocked, guide out to the browser ---- */
+  #tiktok { display: none; }
+  .arrow {
+    position: fixed; top: 6px; right: 14px; z-index: 5;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: #b4612a; font-weight: 700; font-size: 13px;
+    animation: bob 1.1s ease-in-out infinite;
+  }
+  .arrow svg { width: 30px; height: 30px; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+  .card {
+    width: 100%; max-width: 360px; margin: 0 auto;
+    background: #fff; border: 1px solid #ece3d4; border-radius: 20px;
+    padding: 26px 22px; box-shadow: 0 10px 40px rgba(28,27,26,.08);
+  }
+  .step { display: flex; align-items: center; gap: 12px; text-align: left;
+          font-size: 16px; line-height: 1.4; margin: 0 0 14px; }
+  .step:last-of-type { margin-bottom: 0; }
+  .num  { flex: none; width: 26px; height: 26px; border-radius: 50%;
+          background: #1c1b1a; color: #fbf8f3; font-size: 14px; font-weight: 700;
+          display: flex; align-items: center; justify-content: center; }
+  .or   { margin: 22px 0 0; font-size: 14px; color: #6b6660; }
+  .or b { color: #1c1b1a; }
   @media (prefers-color-scheme: dark) {
     body { color: #ece7df; background: #1c1b1a; }
     .tag { color: #9a948b; }
     .btn { background: #ece7df; color: #1c1b1a; }
     .btn.alt { background: transparent; color: #ece7df; border-color: #45403a; }
+    .card { background: #26231f; border-color: #35302a; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+    .num  { background: #ece7df; color: #1c1b1a; }
+    .or b { color: #ece7df; }
+    .arrow { color: #e0894f; }
   }
 </style>
 </head>
@@ -127,6 +158,25 @@
     <p class="hint" id="hint">Doesn’t open? Tap <span class="dots">⋯</span> → “Open in browser”.</p>
   </div>
 
+  <!-- TikTok webview: it blocks store links for non-business accounts (verified on
+       device 2026-07-24 — no store link opens, incl. a competitor's). Only the
+       manual "⋯ → Open in browser" gets out, so keep the instruction here. -->
+  <div id="tiktok">
+    <div class="arrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+           stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      <span>⋯ up here</span>
+    </div>
+    <h1 class="mark">Vials</h1>
+    <p class="tag">ASMR Sand Sort Puzzle · free</p>
+    <div class="card">
+      <div class="step"><span class="num">1</span><span>Tap the <span class="dots">⋯</span> menu (top-right)</span></div>
+      <div class="step"><span class="num">2</span><span>Choose <b>“Open in browser”</b></span></div>
+      <div class="step"><span class="num">3</span><span id="step3">The store opens automatically</span></div>
+      <p class="or" id="orLine">…or just search <b>“Vials”</b> in your app store.</p>
+    </div>
+  </div>
+
   <script>
     (function () {
       var src = window.__src;
@@ -138,6 +188,18 @@
       if (!window.__inApp) return;
 
       var isIOS = window.__isIOS, isAndroid = window.__isAndroid;
+
+      // TikTok blocks store links inside its webview -> instruction, not a button.
+      if (window.__isTikTok) {
+        var store = isAndroid && !isIOS ? 'Google Play' : (isIOS ? 'App Store' : 'store');
+        var where = isAndroid && !isIOS ? 'on Google Play' : (isIOS ? 'in the App Store' : 'in your app store');
+        document.getElementById('step3').textContent = 'The ' + store + ' opens automatically';
+        document.getElementById('orLine').innerHTML = '…or just search <b>“Vials”</b> ' + where + '.';
+        document.getElementById('landing').style.display = 'none';
+        document.getElementById('tiktok').style.display = 'block';
+        return;
+      }
+
       var one = document.getElementById('storeBtn');
       var two = document.getElementById('storeBtn2');
 
