@@ -33,7 +33,11 @@
       window.__isAndroid = oso ? oso === 'android' : /Android/.test(ua);
       window.__inApp = params.get('force') === 'inapp' ||
         /BytedanceWebview|musical_ly|TikTok|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(ua);
-      window.__src = params.get('utm_source') || params.get('from') || params.get('ref') || 'bio';
+      // `ct` is Apple's campaign-token param and the TikTok bio link is tagged
+      // with it — read it too, or that traffic silently lands on the 'bio'
+      // default and becomes indistinguishable from every other profile link.
+      window.__src = params.get('utm_source') || params.get('from') ||
+                     params.get('ref') || params.get('ct') || 'bio';
 
       if (params.get('force') === 'inapp') return;   // preview the instruction
       if (params.has('stay')) return;                 // force landing
@@ -113,7 +117,7 @@
     <h1 class="mark">Vials</h1>
     <p class="tag">ASMR Sand Sort Puzzle · free · play offline</p>
     <div class="btns">
-      <a class="btn" id="iosBtn" href="https://apps.apple.com/app/id6783449445?ct=tiktok_bio"
+      <a class="btn" id="iosBtn" href="https://apps.apple.com/app/id6783449445?ct=bio"
          target="_blank" rel="noopener">Download on the App Store</a>
       <a class="btn" id="androidBtn"
          href="https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer=utm_source%3Dbio%26utm_medium%3Dbio"
@@ -141,6 +145,15 @@
 
   <script>
     (function () {
+      // Desktop / fell-through landing: carry the source tag onto both buttons.
+      // The hrefs in the markup are only the no-JS fallback.
+      var src = window.__src || 'bio';
+      document.getElementById('iosBtn').href =
+        APPSTORE + '?ct=' + encodeURIComponent(src);
+      document.getElementById('androidBtn').href =
+        'https://play.google.com/store/apps/details?id=' + PLAY_ID +
+        '&referrer=' + encodeURIComponent('utm_source=' + src + '&utm_medium=bio');
+
       // Platform-aware wording for the in-app instruction.
       if (window.__inApp) {
         var isIOS = window.__isIOS, isAndroid = window.__isAndroid;
