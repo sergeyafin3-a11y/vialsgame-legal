@@ -6,40 +6,23 @@
 <title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
 <script>
-  // Bio / ad link: https://vialsgame.com/get  — one link, both platforms.
+  // Bio link: https://vialsgame.com/get  — one link, both platforms.
   //
-  // In-app browsers (TikTok / Instagram / FB …) trap the page in a webview and
-  // cannot be forced out to Safari/Chrome. They CAN still reach the store app:
-  // an `apps.apple.com` universal link opens the App Store, and an `intent://`
-  // URL with `package=com.android.vending` opens Google Play. So a webview gets
-  // ONE big store button — never a "⋯ → Open in browser" instruction, which is
-  // where the ad traffic used to die (2026-07-27: ~128 taps -> 4 installs).
+  // In-app browsers (TikTok / Instagram / FB …) trap the page in a webview that
+  // can't hand off to a store — no link/redirect escapes it and JS can't force
+  // the system browser. Only the user tapping "⋯ → Open in browser" gets out.
+  // So:
   //   - Real Safari on iOS      -> auto-redirect to the App Store.
   //   - Real Chrome on Android  -> auto-redirect to the Google Play listing.
-  //   - In-app webview          -> single store button, platform-aware href.
+  //       (Pre-launch the Play page 404s by design — the moment the listing is
+  //        published it just starts working, no change needed here.)
+  //   - In-app webview          -> platform-aware "Open in browser" instruction.
   //   - Desktop                 -> plain landing with both store buttons.
   //
-  // Preview/debug params: ?stay=1 force landing · ?force=inapp show webview UI ·
+  // Preview/debug params: ?stay=1 force landing · ?force=inapp show instruction ·
   //   ?os=ios|android override platform.
   var APPSTORE = 'https://apps.apple.com/app/id6783449445';
   var PLAY_ID  = 'com.vialsgame.app';
-
-  function iosStoreUrl(src) {
-    return APPSTORE + '?ct=' + encodeURIComponent(src);
-  }
-  function playStoreUrl(src) {
-    return 'https://play.google.com/store/apps/details?id=' + PLAY_ID +
-      '&referrer=' + encodeURIComponent('utm_source=' + src + '&utm_medium=bio');
-  }
-  // Opens the Play Store *app* from inside a webview; falls back to the https
-  // listing on its own if the intent cannot be resolved.
-  function playIntentUrl(src) {
-    return 'intent://details?id=' + PLAY_ID +
-      '&referrer=' + encodeURIComponent('utm_source=' + src + '&utm_medium=bio') +
-      '#Intent;scheme=market;package=com.android.vending;S.browser_fallback_url=' +
-      encodeURIComponent(playStoreUrl(src)) + ';end';
-  }
-
   (function () {
     try {
       var loc = window.location;
@@ -48,23 +31,21 @@
       var oso = params.get('os');
       window.__isIOS     = oso ? oso === 'ios'     : (/iPad|iPhone|iPod/.test(ua) && !window.MSStream);
       window.__isAndroid = oso ? oso === 'android' : /Android/.test(ua);
-      window.__isTikTok = params.get('force') === 'tiktok' ||
-        /BytedanceWebview|musical_ly|TikTok|Trill|aweme/i.test(ua);
-      window.__inApp = params.get('force') === 'inapp' || window.__isTikTok ||
-        /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(ua);
+      window.__inApp = params.get('force') === 'inapp' ||
+        /BytedanceWebview|musical_ly|TikTok|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Pinterest|Twitter|MicroMessenger|VKClient|OKApp|GSA/i.test(ua);
       window.__src = params.get('utm_source') || params.get('from') || params.get('ref') || 'bio';
 
-      if (params.get('force') === 'inapp' ||
-          params.get('force') === 'tiktok') return;  // preview the webview UI
+      if (params.get('force') === 'inapp') return;   // preview the instruction
       if (params.has('stay')) return;                 // force landing
       if (document.referrer && document.referrer.indexOf(loc.origin) === 0) return;
-      if (window.__inApp) return;                     // in-app -> store button below
+      if (window.__inApp) return;                     // in-app -> instruction below
 
       // Real external browser -> straight to the right store.
       if (window.__isIOS) {
-        loc.replace(iosStoreUrl(window.__src));
+        loc.replace(APPSTORE + '?ct=' + encodeURIComponent(window.__src));
       } else if (window.__isAndroid) {
-        loc.replace(playStoreUrl(window.__src));
+        loc.replace('https://play.google.com/store/apps/details?id=' + PLAY_ID +
+          '&referrer=' + encodeURIComponent('utm_source=' + window.__src + '&utm_medium=bio'));
       }
       // desktop -> fall through to landing
     } catch (e) { /* fail open -> landing */ }
@@ -91,14 +72,8 @@
   .foot { margin-top: 40px; font-size: 13px; color: #9a948b; }
   .foot a { color: #b4612a; }
 
-  /* ---- in-app webview: one tap to the store (non-TikTok) ---- */
+  /* ---- in-app "open in browser" instruction ---- */
   #inapp { display: none; }
-  .btn.alt { background: transparent; color: #1c1b1a; border-color: #d9d0c1; }
-  .hint  { margin: 26px 0 0; font-size: 13px; color: #9a948b; }
-  .dots  { font-weight: 800; letter-spacing: 1px; }
-
-  /* ---- TikTok webview: store links are blocked, guide out to the browser ---- */
-  #tiktok { display: none; }
   .arrow {
     position: fixed; top: 6px; right: 14px; z-index: 5;
     display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -118,13 +93,13 @@
   .num  { flex: none; width: 26px; height: 26px; border-radius: 50%;
           background: #1c1b1a; color: #fbf8f3; font-size: 14px; font-weight: 700;
           display: flex; align-items: center; justify-content: center; }
+  .dots { font-weight: 800; letter-spacing: 1px; }
   .or   { margin: 22px 0 0; font-size: 14px; color: #6b6660; }
   .or b { color: #1c1b1a; }
   @media (prefers-color-scheme: dark) {
     body { color: #ece7df; background: #1c1b1a; }
     .tag { color: #9a948b; }
-    .btn { background: #ece7df; color: #1c1b1a; }
-    .btn.alt { background: transparent; color: #ece7df; border-color: #45403a; }
+    .btn  { background: #ece7df; color: #1c1b1a; }
     .card { background: #26231f; border-color: #35302a; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
     .num  { background: #ece7df; color: #1c1b1a; }
     .or b { color: #ece7df; }
@@ -147,21 +122,8 @@
     <p class="foot"><a href="https://vialsgame.com/">vialsgame.com</a></p>
   </div>
 
-  <!-- In-app browser (TikTok / Instagram / …): one tap straight to the store app -->
+  <!-- In-app browser: guide the user out to the real browser (text set per platform) -->
   <div id="inapp">
-    <h1 class="mark">Vials</h1>
-    <p class="tag">ASMR Sand Sort Puzzle · free · play offline</p>
-    <div class="btns">
-      <a class="btn" id="storeBtn" href="#">Get the game</a>
-      <a class="btn alt" id="storeBtn2" href="#">Get it on Google Play</a>
-    </div>
-    <p class="hint" id="hint">Doesn’t open? Tap <span class="dots">⋯</span> → “Open in browser”.</p>
-  </div>
-
-  <!-- TikTok webview: it blocks store links for non-business accounts (verified on
-       device 2026-07-24 — no store link opens, incl. a competitor's). Only the
-       manual "⋯ → Open in browser" gets out, so keep the instruction here. -->
-  <div id="tiktok">
     <div class="arrow">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
            stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -179,47 +141,16 @@
 
   <script>
     (function () {
-      var src = window.__src;
-
-      // Landing (desktop / real browser that fell through) — carry the source tag.
-      document.getElementById('iosBtn').href = iosStoreUrl(src);
-      document.getElementById('androidBtn').href = playStoreUrl(src);
-
-      if (!window.__inApp) return;
-
-      var isIOS = window.__isIOS, isAndroid = window.__isAndroid;
-
-      // TikTok blocks store links inside its webview -> instruction, not a button.
-      if (window.__isTikTok) {
+      // Platform-aware wording for the in-app instruction.
+      if (window.__inApp) {
+        var isIOS = window.__isIOS, isAndroid = window.__isAndroid;
         var store = isAndroid && !isIOS ? 'Google Play' : (isIOS ? 'App Store' : 'store');
         var where = isAndroid && !isIOS ? 'on Google Play' : (isIOS ? 'in the App Store' : 'in your app store');
         document.getElementById('step3').textContent = 'The ' + store + ' opens automatically';
         document.getElementById('orLine').innerHTML = '…or just search <b>“Vials”</b> ' + where + '.';
         document.getElementById('landing').style.display = 'none';
-        document.getElementById('tiktok').style.display = 'block';
-        return;
+        document.getElementById('inapp').style.display = 'block';
       }
-
-      var one = document.getElementById('storeBtn');
-      var two = document.getElementById('storeBtn2');
-
-      if (isAndroid && !isIOS) {
-        one.href = playIntentUrl(src);          // opens the Play Store app
-        one.textContent = 'Get it on Google Play';
-        two.style.display = 'none';
-      } else if (isIOS) {
-        one.href = iosStoreUrl(src);            // universal link -> App Store app
-        one.textContent = 'Download on the App Store';
-        two.style.display = 'none';
-      } else {
-        // Unknown platform inside a webview -> offer both, plain https.
-        one.href = iosStoreUrl(src);
-        one.textContent = 'Download on the App Store';
-        two.href = playStoreUrl(src);
-      }
-
-      document.getElementById('landing').style.display = 'none';
-      document.getElementById('inapp').style.display = 'block';
     })();
   </script>
 </body>
