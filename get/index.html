@@ -6,6 +6,30 @@
 <title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
 <script>
+  // GA4 web stream "Vials Web". Consent defaults run before the tag: the
+  // redirect page sends cookieless measurement pings and writes no Analytics
+  // or advertising cookies unless a future consent UI explicitly updates it.
+  var GA_ID = 'G-WF00NX0NH6';
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('consent', 'default', {
+    analytics_storage: 'denied',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied'
+  });
+  // Local previews/tests must not become acquisition traffic. The production
+  // custom domain is the only host that loads the Google tag.
+  if (window.location.hostname === 'vialsgame.com' ||
+      window.location.hostname === 'www.vialsgame.com') {
+    gtag('js', new Date());
+    gtag('config', GA_ID);
+    var gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    document.head.appendChild(gaScript);
+  }
+
   // Bio link: https://vialsgame.com/get  — one link, both platforms.
   //
   // In-app browsers (TikTok / Instagram / FB …) trap the page in a webview that
@@ -29,9 +53,92 @@
   // `pt` from ASC → Аналитика → Кампании (2026-07-27). NB: Apple needs installs
   // from 5 distinct Apple Accounts before it will show a campaign at all.
   var APPLE_PT = '128892810';
-  function iosStoreUrl(src) {
-    return APPSTORE + '?pt=' + APPLE_PT + '&ct=' + encodeURIComponent(src) + '&mt=8';
+
+  // Trim + clamp BOTH branches: the fallback is itself query-string input
+  // (`from` / `ref` / `ct`), so it needs the same 100-char clamp as the primary
+  // param — otherwise a padded `?ct=…` walks unbounded into the GA payload.
+  function campaignValue(params, name, fallback) {
+    var value = params.get(name);
+    var raw = value && value.trim() ? value : fallback;
+    return raw && String(raw).trim() ? String(raw).trim().slice(0, 100) : '';
   }
+
+  function appleCampaignToken(campaign) {
+    // App Store Connect campaign names accept at most 30 characters. Fold the
+    // reusable UTM tuple into one deterministic token for aggregate iOS
+    // downloads; detailed UTMs remain available on the web side.
+    var raw = [campaign.source, campaign.name, campaign.content]
+      .filter(Boolean).join('-');
+    return raw.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '')
+      .slice(0, 30) || 'bio';
+  }
+
+  function iosStoreUrl(campaign) {
+    return APPSTORE + '?pt=' + APPLE_PT + '&ct=' +
+      encodeURIComponent(appleCampaignToken(campaign)) + '&mt=8';
+  }
+
+  function playStoreUrl(campaign) {
+    var referrer = new URLSearchParams();
+    referrer.set('utm_source', campaign.source);
+    referrer.set('utm_medium', campaign.medium);
+    if (campaign.name) referrer.set('utm_campaign', campaign.name);
+    if (campaign.content) referrer.set('utm_content', campaign.content);
+    if (campaign.term) referrer.set('utm_term', campaign.term);
+    if (campaign.id) referrer.set('utm_id', campaign.id);
+    return 'https://play.google.com/store/apps/details?id=' + PLAY_ID +
+      '&referrer=' + encodeURIComponent(referrer.toString());
+  }
+
+  var CAMPAIGN_FALLBACK = {
+    source: 'bio', medium: 'bio', name: '', content: '', term: '', id: ''
+  };
+
+  function currentCampaign() {
+    // The head IIFE fails open (old browser, no URLSearchParams) and may leave
+    // __campaign unset. Reading it unguarded threw inside the measurement call
+    // and aborted the tail script — taking the store hand-off with it, so a
+    // mobile visitor was stranded on the desktop landing.
+    return window.__campaign || CAMPAIGN_FALLBACK;
+  }
+
+  function analyticsParams(extra) {
+    var c = currentCampaign();
+    return Object.assign({
+      campaign_source: c.source,
+      campaign_medium: c.medium,
+      campaign_name: c.name || '(not set)',
+      campaign_content: c.content || '(not set)',
+      platform: window.__isIOS ? 'ios' :
+        (window.__isAndroid ? 'android' : 'desktop'),
+      in_app: window.__inApp ? 1 : 0
+    }, extra || {});
+  }
+
+  function redirectToStore(store, url) {
+    var navigated = false;
+    function navigate() {
+      if (navigated) return;
+      navigated = true;
+      window.location.replace(url);
+    }
+    // `transport_type` is a Universal Analytics field — GA4 gtag does not
+    // consume it and would record it as a junk event parameter. GA4 already
+    // uses navigator.sendBeacon, so the queued hit survives the navigation;
+    // the timeout is only a floor for the callback, not for delivery.
+    try {
+      gtag('event', 'store_click', analyticsParams({
+        store: store,
+        automatic: 1,
+        event_callback: navigate,
+        event_timeout: 250
+      }));
+    } catch (e) { /* measurement is best-effort — the timeout still navigates */ }
+    // Highest-intent path — keep the stall short. Without the tag loaded (any
+    // non-production host) the callback never fires and this is the only exit.
+    window.setTimeout(navigate, 300);
+  }
+
   (function () {
     try {
       var loc = window.location;
@@ -45,22 +152,22 @@
       // `ct` is Apple's campaign-token param and the TikTok bio link is tagged
       // with it — read it too, or that traffic silently lands on the 'bio'
       // default and becomes indistinguishable from every other profile link.
-      window.__src = params.get('utm_source') || params.get('from') ||
-                     params.get('ref') || params.get('ct') || 'bio';
+      var source = campaignValue(params, 'utm_source',
+        params.get('from') || params.get('ref') || params.get('ct') || 'bio');
+      window.__campaign = {
+        source: source,
+        medium: campaignValue(params, 'utm_medium',
+          source === 'bio' ? 'bio' : 'social'),
+        name: campaignValue(params, 'utm_campaign', ''),
+        content: campaignValue(params, 'utm_content', ''),
+        term: campaignValue(params, 'utm_term', ''),
+        id: campaignValue(params, 'utm_id', '')
+      };
+      // Kept for old preview snippets; all real links use __campaign now.
+      window.__src = source;
 
-      if (params.get('force') === 'inapp') return;   // preview the instruction
-      if (params.has('stay')) return;                 // force landing
-      if (document.referrer && document.referrer.indexOf(loc.origin) === 0) return;
-      if (window.__inApp) return;                     // in-app -> instruction below
-
-      // Real external browser -> straight to the right store.
-      if (window.__isIOS) {
-        loc.replace(iosStoreUrl(window.__src));
-      } else if (window.__isAndroid) {
-        loc.replace('https://play.google.com/store/apps/details?id=' + PLAY_ID +
-          '&referrer=' + encodeURIComponent('utm_source=' + window.__src + '&utm_medium=bio'));
-      }
-      // desktop -> fall through to landing
+      window.__stay = params.has('stay') ||
+        (document.referrer && document.referrer.indexOf(loc.origin) === 0);
     } catch (e) { /* fail open -> landing */ }
   })();
 </script>
@@ -129,7 +236,7 @@
       <a class="btn" id="iosBtn" href="https://apps.apple.com/app/id6783449445?pt=128892810&amp;ct=bio&amp;mt=8"
          target="_blank" rel="noopener">Download on the App Store</a>
       <a class="btn" id="androidBtn"
-         href="https://play.google.com/store/apps/details?id=com.vialsgame.app&referrer=utm_source%3Dbio%26utm_medium%3Dbio"
+         href="https://play.google.com/store/apps/details?id=com.vialsgame.app&amp;referrer=utm_source%3Dbio%26utm_medium%3Dbio"
          target="_blank" rel="noopener">Get it on Google Play</a>
     </div>
     <p class="foot"><a href="https://vialsgame.com/">vialsgame.com</a></p>
@@ -154,14 +261,26 @@
 
   <script>
     (function () {
-      // Desktop / fell-through landing: carry the source tag onto both buttons.
-      // The hrefs in the markup are only the no-JS fallback.
-      var src = window.__src || 'bio';
-      document.getElementById('iosBtn').href =
-        iosStoreUrl(src);
-      document.getElementById('androidBtn').href =
-        'https://play.google.com/store/apps/details?id=' + PLAY_ID +
-        '&referrer=' + encodeURIComponent('utm_source=' + src + '&utm_medium=bio');
+      var campaign = currentCampaign();
+      // Desktop / fell-through landing: carry the complete campaign tuple onto
+      // both stores. The hrefs in the markup are only the no-JS fallback.
+      var iosUrl = iosStoreUrl(campaign);
+      var androidUrl = playStoreUrl(campaign);
+      var iosBtn = document.getElementById('iosBtn');
+      var androidBtn = document.getElementById('androidBtn');
+      iosBtn.href = iosUrl;
+      androidBtn.href = androidUrl;
+
+      iosBtn.addEventListener('click', function () {
+        gtag('event', 'store_click', analyticsParams({
+          store: 'app_store', automatic: 0
+        }));
+      });
+      androidBtn.addEventListener('click', function () {
+        gtag('event', 'store_click', analyticsParams({
+          store: 'google_play', automatic: 0
+        }));
+      });
 
       // Platform-aware wording for the in-app instruction.
       if (window.__inApp) {
@@ -172,6 +291,23 @@
         document.getElementById('orLine').innerHTML = '…or just search <b>“Vials”</b> ' + where + '.';
         document.getElementById('landing').style.display = 'none';
         document.getElementById('inapp').style.display = 'block';
+      }
+
+      // Measurement must never be able to break the funnel it measures: the
+      // store hand-off below runs even if the tag or the event payload throws.
+      try {
+        gtag('event', 'landing_view', analyticsParams());
+      } catch (e) { /* measurement is best-effort */ }
+
+      // Give the queued cookieless landing/store events a short window to
+      // leave before the store hand-off. In-app webviews stay on the
+      // instruction; desktop and ?stay=1 stay on the landing.
+      if (!window.__inApp && !window.__stay) {
+        if (window.__isIOS) {
+          redirectToStore('app_store', iosUrl);
+        } else if (window.__isAndroid) {
+          redirectToStore('google_play', androidUrl);
+        }
       }
     })();
   </script>
