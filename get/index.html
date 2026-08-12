@@ -6,7 +6,12 @@
 <title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
 <script>
-  // GA4 web stream "Vials Web".
+  // GA4 property "vialsgame.com (site)" — the SITE only. Do not point this at
+  // the app property (`vials-sand-sort`, G-WF00NX0NH6): its streams feed the
+  // Firebase overview, and the site out-scales the game roughly five to one
+  // (803 landing views vs 157 new players in the 28 days to 2026-08-12). Mixed
+  // into one property, every "users" figure stops meaning "players" — which is
+  // exactly what happened for one day on 2026-08-12 before the split.
   //
   // Consent defaults run before the tag. Until 2026-08-12 this page declared
   // analytics_storage: 'denied' worldwide and never updated it — there is no
@@ -22,7 +27,7 @@
   // nothing measured, and no banner on a page that lives 300 ms); everywhere
   // else — which is where our traffic actually is — becomes measurable.
   // Advertising storage stays denied worldwide: this page does no remarketing.
-  var GA_ID = 'G-WF00NX0NH6';
+  var GA_ID = 'G-VQWW92LC5J';
   window.dataLayer = window.dataLayer || [];
   function gtag(){ dataLayer.push(arguments); }
   gtag('consent', 'default', {
