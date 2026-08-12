@@ -6,14 +6,36 @@
 <title>Get Vials — ASMR Sand Sort Puzzle</title>
 <meta name="robots" content="noindex">
 <script>
-  // GA4 web stream "Vials Web". Consent defaults run before the tag: the
-  // redirect page sends cookieless measurement pings and writes no Analytics
-  // or advertising cookies unless a future consent UI explicitly updates it.
+  // GA4 web stream "Vials Web".
+  //
+  // Consent defaults run before the tag. Until 2026-08-12 this page declared
+  // analytics_storage: 'denied' worldwide and never updated it — there is no
+  // consent UI that could grant it. GA4 accepted every hit (HTTP 204) and
+  // surfaced none of them: consent-denied traffic arrives as cookieless pings,
+  // which feed modelling only and never appear in Realtime, in standard
+  // reports, or in the BigQuery export. 803 paid landing-page views from
+  // TikTok were therefore measured as zero. Proven by sending two otherwise
+  // identical hits: gcs=G111 appeared in Realtime, gcs=G100 did not.
+  //
+  // Region-scoped defaults are Google's documented fix — the region entry wins
+  // over the global one. EEA/UK/CH keep today's behaviour (nothing stored,
+  // nothing measured, and no banner on a page that lives 300 ms); everywhere
+  // else — which is where our traffic actually is — becomes measurable.
+  // Advertising storage stays denied worldwide: this page does no remarketing.
   var GA_ID = 'G-WF00NX0NH6';
   window.dataLayer = window.dataLayer || [];
   function gtag(){ dataLayer.push(arguments); }
   gtag('consent', 'default', {
     analytics_storage: 'denied',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    region: ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU',
+             'IS','IE','IT','LV','LI','LT','LU','MT','NL','NO','PL','PT','RO',
+             'SK','SI','ES','SE','GB','CH']
+  });
+  gtag('consent', 'default', {
+    analytics_storage: 'granted',
     ad_storage: 'denied',
     ad_user_data: 'denied',
     ad_personalization: 'denied'
@@ -78,16 +100,27 @@
       encodeURIComponent(appleCampaignToken(campaign)) + '&mt=8';
   }
 
+  // Built by hand rather than with URLSearchParams: this runs on the fail-open
+  // path too (a browser without URLSearchParams makes the head IIFE bail), and
+  // there a constructor throw here would abort the tail script and strand a
+  // mobile visitor on the desktop landing.
   function playStoreUrl(campaign) {
-    var referrer = new URLSearchParams();
-    referrer.set('utm_source', campaign.source);
-    referrer.set('utm_medium', campaign.medium);
-    if (campaign.name) referrer.set('utm_campaign', campaign.name);
-    if (campaign.content) referrer.set('utm_content', campaign.content);
-    if (campaign.term) referrer.set('utm_term', campaign.term);
-    if (campaign.id) referrer.set('utm_id', campaign.id);
+    var pairs = [
+      ['utm_source', campaign.source],
+      ['utm_medium', campaign.medium],
+      ['utm_campaign', campaign.name],
+      ['utm_content', campaign.content],
+      ['utm_term', campaign.term],
+      ['utm_id', campaign.id]
+    ];
+    var referrer = [];
+    for (var i = 0; i < pairs.length; i++) {
+      if (!pairs[i][1]) continue;
+      referrer.push(encodeURIComponent(pairs[i][0]) + '=' +
+        encodeURIComponent(pairs[i][1]));
+    }
     return 'https://play.google.com/store/apps/details?id=' + PLAY_ID +
-      '&referrer=' + encodeURIComponent(referrer.toString());
+      '&referrer=' + encodeURIComponent(referrer.join('&'));
   }
 
   var CAMPAIGN_FALLBACK = {
@@ -299,9 +332,9 @@
         gtag('event', 'landing_view', analyticsParams());
       } catch (e) { /* measurement is best-effort */ }
 
-      // Give the queued cookieless landing/store events a short window to
-      // leave before the store hand-off. In-app webviews stay on the
-      // instruction; desktop and ?stay=1 stay on the landing.
+      // Give the queued landing/store events a short window to leave before
+      // the store hand-off. In-app webviews stay on the instruction; desktop
+      // and ?stay=1 stay on the landing.
       if (!window.__inApp && !window.__stay) {
         if (window.__isIOS) {
           redirectToStore('app_store', iosUrl);
