@@ -170,7 +170,9 @@ video.unrulymedia.com, 894246135, RESELLER, 98c21ef9a666c68b
 xandr.com, 13955, RESELLER, f5ab79cb980f11d1
 xandr.com, 15278, RESELLER, f5ab79cb980f11d1
 yandex.com, 329062757, DIRECT
+yandex.com, 329636261, DIRECT
 yango-ads.com, 329062757, DIRECT
+yango-ads.com, 329636261, DIRECT
 zetaglobal.net, 626, RESELLER
 zetaglobal.net, 689, RESELLER
 zmaticoo.com, 114122, RESELLER
