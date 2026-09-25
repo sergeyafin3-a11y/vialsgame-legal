@@ -3,26 +3,314 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vials: ASMR Sand Sort Puzzle — Legal</title>
-<style>
-  :root { color-scheme: light dark; }
-  body {
-    max-width: 720px; margin: 0 auto; padding: 48px 20px;
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #1c1b1a; background: #fbf8f3;
+<title>Vials — ASMR Sand Sort Puzzle</title>
+<meta name="description" content="Pour, sort, breathe. Vials is a calm sand-sorting puzzle with soft ASMR pours, no timers and 1,000+ levels. Free on iPhone, iPad and Android. Plays offline.">
+<link rel="canonical" href="https://vialsgame.com/">
+<meta name="theme-color" content="#FAF8EF">
+<link rel="icon" type="image/png" href="img/icon-180.png">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<meta name="apple-itunes-app" content="app-id=6783449445">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vials">
+<meta property="og:title" content="Vials — ASMR Sand Sort Puzzle">
+<meta property="og:description" content="Pour, sort, breathe. A calm sand-sorting puzzle — free on iOS & Android.">
+<meta property="og:url" content="https://vialsgame.com/">
+<meta property="og:image" content="https://vialsgame.com/feature_graphic_1024x500.png">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="500">
+<meta name="twitter:card" content="summary_large_image">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "MobileApplication",
+  "name": "Vials: ASMR Sand Sort Puzzle",
+  "operatingSystem": "iOS, Android",
+  "applicationCategory": "GameApplication",
+  "genre": "Puzzle",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "url": "https://vialsgame.com/",
+  "sameAs": [
+    "https://apps.apple.com/app/id6783449445",
+    "https://play.google.com/store/apps/details?id=com.vialsgame.app"
+  ]
+}
+</script>
+
+<script>
+  // Same GA4 property as /get — "vialsgame.com (site)", never the app property.
+  // Consent defaults and the rationale behind them are documented in
+  // get/index.html; keep the two pages in step.
+  var GA_ID = 'G-VQWW92LC5J';
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('consent', 'default', {
+    analytics_storage: 'denied',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    region: ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU',
+             'IS','IE','IT','LV','LI','LT','LU','MT','NL','NO','PL','PT','RO',
+             'SK','SI','ES','SE','GB','CH']
+  });
+  gtag('consent', 'default', {
+    analytics_storage: 'granted',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied'
+  });
+  // Local previews must not become traffic: only the production host loads the tag.
+  if (location.hostname === 'vialsgame.com' || location.hostname === 'www.vialsgame.com') {
+    gtag('js', new Date());
+    gtag('config', GA_ID);
+    var gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    document.head.appendChild(gaScript);
   }
-  a { color: #b4612a; }
-  @media (prefers-color-scheme: dark) {
-    body { color: #ece7df; background: #1c1b1a; }
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  /* Vials v0.3 tokens — mirrors lib/ui/theme/app_colors.dart. The board
+     screenshots are shot on the game's own background (#FAF8EF), so they sit
+     on the page without a visible edge. The game has no dark theme; neither
+     does its site. */
+  :root {
+    color-scheme: light;
+    --bg: #FAF8EF;
+    --surface: #F3ECDF;
+    --ink: #3D3A36;
+    --ink-soft: #776E65;
+    --line: rgba(119, 110, 101, .22);
+    --accent: #B4612A;
+    --serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --wrap: 1080px;
+    --gutter: 20px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 400 17px/1.6 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  img { display: block; max-width: 100%; height: auto; }
+  a { color: inherit; }
+  .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 var(--gutter); }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 400; margin: 0;
+               letter-spacing: -0.015em; font-optical-sizing: auto; }
+
+  /* ---- nav ---- */
+  .nav { display: flex; align-items: center; justify-content: space-between;
+         padding-top: 22px; padding-bottom: 22px; }
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .brand img { width: 40px; height: 40px; border-radius: 10px; }
+  .brand span { font: 500 24px/1 var(--serif); letter-spacing: -0.01em; }
+  .nav-cta { font-size: 15px; font-weight: 500; text-decoration: none;
+             padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); }
+  .nav-cta:hover { border-color: var(--ink-soft); }
+
+  /* ---- hero ---- */
+  .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px;
+          align-items: center; padding-top: 40px; padding-bottom: 72px; }
+  .eyebrow { font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+             color: var(--ink-soft); margin: 0 0 18px; }
+  .hero h1 { font-size: clamp(46px, 7vw, 84px); line-height: 1.02; }
+  .lead { font-size: 19px; color: var(--ink-soft); max-width: 30em; margin: 24px 0 32px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .badges a { display: block; border-radius: 9px; transition: opacity .2s; }
+  .badges a:hover { opacity: .82; }
+  .badges img { height: 52px; width: auto; }
+  .fine { font-size: 14px; color: var(--ink-soft); margin: 18px 0 0; }
+  .hero-art { justify-self: center; width: 100%; max-width: 460px; }
+
+  /* ---- features ---- */
+  section { padding: 72px 0; }
+  .rule { border-top: 1px solid var(--line); }
+  .section-head { max-width: 34em; margin-bottom: 40px; }
+  .section-head h2 { font-size: clamp(32px, 4.4vw, 48px); line-height: 1.1; }
+  .section-head p { color: var(--ink-soft); margin: 14px 0 0; }
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px 40px;
+              list-style: none; margin: 0; padding: 0; }
+  .features li { border-top: 1px solid var(--line); padding-top: 20px; }
+  .features h3 { font-size: 23px; line-height: 1.25; margin-bottom: 8px; }
+  .features p { margin: 0; color: var(--ink-soft); font-size: 16px; }
+
+  /* ---- gallery ---- */
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .gallery figure { margin: 0; background: var(--bg); border: 1px solid var(--line);
+                    border-radius: 20px; padding: 18px 10px; }
+  .gallery figcaption { text-align: center; font-size: 14px; color: var(--ink-soft);
+                        margin-top: 6px; }
+
+  /* ---- ritual ---- */
+  .ritual { text-align: center; }
+  .ritual h2 { font-size: clamp(32px, 4.4vw, 48px); line-height: 1.1; }
+  .ritual p { max-width: 34em; margin: 18px auto 0; color: var(--ink-soft); font-size: 18px; }
+
+  /* ---- final cta ---- */
+  .final { background: var(--surface); border-radius: 28px; text-align: center;
+           padding: 64px 24px; margin-bottom: 64px; }
+  .final img.icon { width: 88px; height: 88px; border-radius: 20px; margin: 0 auto 22px; }
+  .final h2 { font-size: clamp(32px, 4.4vw, 48px); line-height: 1.1; }
+  .final p { color: var(--ink-soft); margin: 12px 0 28px; }
+  .final .badges { justify-content: center; }
+
+  /* ---- footer ---- */
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px;
+           font-size: 14px; color: var(--ink-soft); }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 28px;
+                 justify-content: space-between; }
+  footer nav { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+  footer a { text-decoration: none; }
+  footer a:hover { color: var(--ink); text-decoration: underline; }
+
+  /* ---- narrow ---- */
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 16px; padding-bottom: 48px; }
+    .hero-art { max-width: 380px; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .gallery { grid-template-columns: repeat(3, 72%); overflow-x: auto;
+               scroll-snap-type: x mandatory; padding-bottom: 8px;
+               margin: 0 calc(-1 * var(--gutter)); padding-left: var(--gutter);
+               padding-right: var(--gutter); scroll-padding: 0 var(--gutter); }
+    .gallery figure { scroll-snap-align: start; }
+    section { padding: 56px 0; }
+  }
+  @media (max-width: 520px) {
+    .features { grid-template-columns: 1fr; gap: 28px; }
+    .badges img { height: 48px; }
+    .nav-cta { display: none; }
+    .lead { font-size: 18px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-art img { animation: settle 1.2s cubic-bezier(.2,.7,.2,1) both; }
+    @keyframes settle { from { opacity: 0; transform: translateY(10px); }
+                        to   { opacity: 1; transform: none; } }
   }
 </style>
 </head>
 <body>
-<h1>Vials: ASMR Sand Sort Puzzle</h1>
-<ul>
-  <li><a href="./privacy.html">Privacy Policy</a></li>
-  <li><a href="./terms.html">Terms of Service</a></li>
-</ul>
-<p><a href="mailto:vialsgame.play@gmail.com">vialsgame.play@gmail.com</a></p>
+
+<header class="wrap nav">
+  <a class="brand" href="/" aria-label="Vials home">
+    <img src="img/icon-160.webp" width="40" height="40" alt="">
+    <span>Vials</span>
+  </a>
+  <a class="nav-cta" href="#get">Get the game</a>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <p class="eyebrow">ASMR sand sort puzzle</p>
+      <h1>Pour. Sort.<br>Breathe.</h1>
+      <p class="lead">Pour soft, shimmering sand from glass to glass until every
+        color settles in its own vial. No timers, no pressure — just that oddly
+        satisfying moment when a glass turns one clean color.</p>
+      <div class="badges">
+        <a class="store" data-store="app_store" href="https://apps.apple.com/app/id6783449445?pt=128892810&amp;ct=site&amp;mt=8">
+          <img src="img/badge-app-store.svg" width="156" height="52" alt="Download on the App Store"></a>
+        <a class="store" data-store="google_play" href="https://play.google.com/store/apps/details?id=com.vialsgame.app&amp;referrer=utm_source%3Dsite%26utm_medium%3Dlanding">
+          <img src="img/badge-google-play.png" width="175" height="52" alt="Get it on Google Play"></a>
+      </div>
+      <p class="fine">Free · iPhone, iPad &amp; Android · Plays offline</p>
+    </div>
+    <div class="hero-art">
+      <img src="img/board-pour.webp" width="880" height="1185"
+           alt="A tilted hourglass vial pouring pink sand into another vial on a Vials level">
+    </div>
+  </div>
+
+  <section class="rule">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>A small ritual of calm</h2>
+        <p>Made to quiet a busy mind — for the commute, a break between tasks,
+          or the last few minutes before sleep.</p>
+      </div>
+      <ul class="features">
+        <li><h3>Oddly satisfying</h3>
+          <p>Tap a vial, tap another — the sand pours and settles. One finger, that's all.</p></li>
+        <li><h3>ASMR in every pour</h3>
+          <p>Soft sand sounds, gentle haptics and calm ambient music.</p></li>
+        <li><h3>No timers. Just calm.</h3>
+          <p>No clock, no rush — the level waits for you.</p></li>
+        <li><h3>1,000+ levels</h3>
+          <p>A curve that ramps gently, from easy to genuinely tricky.</p></li>
+        <li><h3>No forced ads</h3>
+          <p>Ads never pop up on their own. Watch one only if you want a bonus.</p></li>
+        <li><h3>Play offline, anywhere</h3>
+          <p>No Wi-Fi needed — on a plane, in bed, underground.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="rule">
+    <div class="wrap">
+      <div class="gallery">
+        <figure><img src="img/board-1.webp" width="880" height="791" loading="lazy"
+             alt="Six hourglass vials filled with layers of muted sand"></figure>
+        <figure><img src="img/board-2.webp" width="880" height="791" loading="lazy"
+             alt="A later level with seven vials in pink, blue and sand tones"></figure>
+        <figure><img src="img/board-3.webp" width="880" height="791" loading="lazy"
+             alt="A level with deep blue, rust and sage sand layers"></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="rule ritual">
+    <div class="wrap">
+      <h2>Muted colors, easy on the eyes</h2>
+      <p>Warm, quiet palettes that change as you move through the chapters —
+        a puzzle designed to feel like a deep breath.</p>
+    </div>
+  </section>
+
+  <div class="wrap" id="get">
+    <div class="final">
+      <img class="icon" src="img/icon-160.webp" width="88" height="88" alt="">
+      <h2>Find your color</h2>
+      <p>Vials is free on iPhone, iPad and Android.</p>
+      <div class="badges">
+        <a class="store" data-store="app_store" href="https://apps.apple.com/app/id6783449445?pt=128892810&amp;ct=site&amp;mt=8">
+          <img src="img/badge-app-store.svg" width="156" height="52" alt="Download on the App Store"></a>
+        <a class="store" data-store="google_play" href="https://play.google.com/store/apps/details?id=com.vialsgame.app&amp;referrer=utm_source%3Dsite%26utm_medium%3Dlanding">
+          <img src="img/badge-google-play.png" width="175" height="52" alt="Get it on Google Play"></a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <nav>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="mailto:vialsgame.play@gmail.com">vialsgame.play@gmail.com</a>
+    </nav>
+    <span>© 2026 Individual Entrepreneur Sergei Afinogenov</span>
+  </div>
+</footer>
+
+<script>
+  // Store clicks go to the same GA4 event as /get, tagged page=home so the two
+  // entry points stay separable.
+  (function () {
+    var links = document.querySelectorAll('a.store');
+    for (var i = 0; i < links.length; i++) {
+      links[i].addEventListener('click', function () {
+        try { gtag('event', 'store_click', { store: this.getAttribute('data-store'),
+                                              page: 'home', automatic: 0 }); } catch (e) {}
+      });
+    }
+  })();
+</script>
 </body>
 </html>
